@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import MathRenderer from "./MathRenderer";
 
 interface AIChatProps {
   initialThreadId?: string;
@@ -48,7 +49,7 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
     setIsLoading(true);
     setTimeout(() => {
       // In a real app, we would call an API to generate a response
-      const simulatedResponse = `I'll help you with your question about "${newMessage.trim()}".\n\nThis would be the detailed explanation from the AI, potentially containing math formulas like $E = mc^2$ or chemical equations.`;
+      const simulatedResponse = `I'll help you with your question about "${newMessage.trim()}".\n\nThis would be the detailed explanation from the AI, potentially containing math formulas like $E = mc^2$ or chemical equations like $H_2O + CO_2 \\rightarrow H_2CO_3$.\n\nWe can also include more complex equations like:\n$$\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$`;
       
       addMessageToThread(activeThreadId, { content: simulatedResponse, isUser: false });
       setIsLoading(false);
@@ -154,7 +155,11 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
                         : "bg-gray-100 text-gray-900"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    {message.isUser ? (
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                    ) : (
+                      <MathRenderer text={message.content} />
+                    )}
                     <div className={`text-xs mt-1 ${message.isUser ? "text-white/70" : "text-gray-500"}`}>
                       {new Date(message.timestamp).toLocaleTimeString()}
                     </div>

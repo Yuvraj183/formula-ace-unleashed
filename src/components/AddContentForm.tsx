@@ -10,7 +10,11 @@ import { addChapter } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-const AddContentForm = () => {
+interface AddContentFormProps {
+  onComplete?: () => void;
+}
+
+const AddContentForm = ({ onComplete }: AddContentFormProps) => {
   const [subject, setSubject] = useState<Subject>("physics");
   const [chapterTitle, setChapterTitle] = useState("");
   const [conceptTitle, setConceptTitle] = useState("");
@@ -52,11 +56,15 @@ const AddContentForm = () => {
       title: "Chapter added successfully",
     });
     
-    navigate(`/${subject}/${newChapter.id}`);
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate(`/${subject}/${newChapter.id}`);
+    }
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Add New Chapter</h2>
       <div className="space-y-6">
         <div className="space-y-2">
@@ -68,7 +76,7 @@ const AddContentForm = () => {
             <SelectContent>
               {Object.entries(SUBJECTS).map(([key, value]) => (
                 <SelectItem key={key} value={key}>
-                  {value.icon} {value.name}
+                  {value.name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -8,7 +8,7 @@ import { getChapters } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus } from "lucide-react";
 import AddContentForm from "@/components/AddContentForm";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Subject = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -49,13 +49,18 @@ const Subject = () => {
                 </p>
               </div>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Chapter
-                  </Button>
-                </DialogTrigger>
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Chapter
+                </Button>
                 <DialogContent className="sm:max-w-lg">
-                  <AddContentForm />
+                  <AddContentForm onComplete={() => {
+                    setDialogOpen(false);
+                    // Refresh chapters after adding
+                    const loadedChapters = getChapters().filter(
+                      (chapter) => chapter.subject === subject
+                    );
+                    setChapters(loadedChapters);
+                  }} />
                 </DialogContent>
               </Dialog>
             </div>
