@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Chat, Lightbulb, Calendar } from "lucide-react";
+import { MessageSquare, Lightbulb, Calendar } from "lucide-react";
 import { SUBJECTS } from "@/lib/data";
 
 const Index = () => {
@@ -85,7 +85,7 @@ const Index = () => {
               
               <div className="bg-white p-6 rounded-xl shadow-md">
                 <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <Chat className="h-6 w-6 text-primary" />
+                  <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">AI Doubt Solver</h3>
                 <p className="text-gray-600">
