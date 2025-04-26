@@ -86,7 +86,7 @@ export const addMessageToThread = (threadId: string, message: { content: string;
     };
     
     threads[threadIndex].messages.push(newMessage);
-    threads[threadIndex].lastUpdated = Date.now();
+    threads[threadIndex].updatedAt = Date.now();
     
     saveChatThreads(threads);
   }
@@ -107,7 +107,8 @@ export const createChatThread = (title: string, initialMessage: string): string 
         timestamp: Date.now()
       }
     ],
-    lastUpdated: Date.now()
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   };
   
   threads.push(newThread);

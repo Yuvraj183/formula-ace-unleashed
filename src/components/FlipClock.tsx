@@ -57,7 +57,8 @@ const FlipClock = () => {
 
   return (
     <div className="flex justify-center">
-      <style jsx>{`
+      <style>
+        {`
         @keyframes flipTop {
           0% { transform: rotateX(0deg); }
           50%, 100% { transform: rotateX(-90deg); }
@@ -77,7 +78,8 @@ const FlipClock = () => {
           animation: flipBottom 0.5s ease-out;
           transform-origin: top center;
         }
-      `}</style>
+      `}
+      </style>
       <div className="flex items-center justify-center space-x-2">
         {/* Hours */}
         <div className="group">
