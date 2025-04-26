@@ -12,8 +12,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, BookOpen, AlignLeft, Calculator, CheckSquare } from "lucide-react";
+import { Subject } from "@/lib/data";
 
-const AppSidebar = () => {
+interface AppSidebarProps {
+  subject?: Subject;
+}
+
+const AppSidebar = ({ subject }: AppSidebarProps = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +30,17 @@ const AppSidebar = () => {
     { title: "AI Solver", icon: Calculator, path: "/ai-solver" },
     { title: "Todo List", icon: CheckSquare, path: "/todo" },
   ];
+
+  const isActive = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    
+    if (subject) {
+      // If we have a subject prop and the path includes that subject, consider it active
+      if (path.includes(subject)) return true;
+    }
+    
+    return location.pathname === path || location.pathname.startsWith(path);
+  };
 
   return (
     <Sidebar>
@@ -40,7 +56,7 @@ const AppSidebar = () => {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.path)}
-                    data-active={location.pathname === item.path}
+                    data-active={isActive(item.path)}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>

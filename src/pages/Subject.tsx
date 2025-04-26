@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
 import { Chapter, SUBJECTS, Subject as SubjectType } from "@/lib/data";
 import { getChapters } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ const Subject = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="flex-1 flex">
-        <Sidebar subject={subject} />
         <main className="flex-1 bg-background">
           <div className="container mx-auto py-8 px-6">
             <div className="flex justify-between items-center mb-8">
