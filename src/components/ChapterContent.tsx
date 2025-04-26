@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Chapter, Concept, Formula, Example } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,9 +14,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash } from "lucide-react";
 import { updateChapter } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChapterContentProps {
   chapter: Chapter;
@@ -27,11 +36,31 @@ interface ChapterContentProps {
 const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => {
   const [activeTab, setActiveTab] = useState<string>(selectedConceptId ? "concepts" : "formulas");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentType, setContentType] = useState<"concept" | "formula" | "example">("concept");
   const [newConcept, setNewConcept] = useState<Partial<Concept>>({ title: "", content: "" });
   const [newFormula, setNewFormula] = useState<Partial<Formula>>({ title: "", latex: "", explanation: "", where: "" });
   const [newExample, setNewExample] = useState<Partial<Example>>({ question: "", solution: "", isJeeAdvanced: false });
+  const [editingItem, setEditingItem] = useState<{id: string, type: "concept" | "formula" | "example"} | null>(null);
+  const [deletingItem, setDeletingItem] = useState<{id: string, type: "concept" | "formula" | "example"} | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<{[key: string]: string[]}>({
+    concept: [],
+    formula: [],
+    example: []
+  });
   const { toast } = useToast();
+
+  const resetForms = () => {
+    setNewConcept({ title: "", content: "" });
+    setNewFormula({ title: "", latex: "", explanation: "", where: "" });
+    setNewExample({ question: "", solution: "", isJeeAdvanced: false });
+    setUploadedImages({
+      concept: [],
+      formula: [],
+      example: []
+    });
+  };
 
   const handleAddContent = () => {
     const updatedChapter = { ...chapter };
@@ -41,6 +70,7 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
         id: `concept-${Date.now()}`,
         title: newConcept.title,
         content: newConcept.content,
+        diagrams: uploadedImages.concept
       };
       updatedChapter.concepts = [...updatedChapter.concepts, concept];
       setNewConcept({ title: "", content: "" });
@@ -51,6 +81,7 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
         latex: newFormula.latex || "",
         explanation: newFormula.explanation || "",
         where: newFormula.where || "",
+        diagrams: uploadedImages.formula
       };
       updatedChapter.formulas = [...updatedChapter.formulas, formula];
       setNewFormula({ title: "", latex: "", explanation: "", where: "" });
@@ -60,6 +91,7 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
         question: newExample.question || "",
         solution: newExample.solution || "",
         isJeeAdvanced: newExample.isJeeAdvanced || false,
+        diagrams: uploadedImages.example
       };
       updatedChapter.examples = [...updatedChapter.examples, example];
       setNewExample({ question: "", solution: "", isJeeAdvanced: false });
@@ -73,17 +105,142 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
     
     updateChapter(updatedChapter);
     setDialogOpen(false);
+    resetForms();
     toast({
       title: "Content added successfully",
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handle file upload
-    // In a real app, this would integrate with a storage service
+  const handleEditContent = () => {
+    if (!editingItem) return;
+    
+    const updatedChapter = { ...chapter };
+    
+    if (editingItem.type === "concept" && newConcept.title && newConcept.content) {
+      const conceptIndex = updatedChapter.concepts.findIndex(c => c.id === editingItem.id);
+      if (conceptIndex >= 0) {
+        updatedChapter.concepts[conceptIndex] = {
+          ...updatedChapter.concepts[conceptIndex],
+          title: newConcept.title,
+          content: newConcept.content,
+          diagrams: [...(updatedChapter.concepts[conceptIndex].diagrams || []), ...uploadedImages.concept]
+        };
+      }
+    } else if (editingItem.type === "formula" && newFormula.title && newFormula.latex) {
+      const formulaIndex = updatedChapter.formulas.findIndex(f => f.id === editingItem.id);
+      if (formulaIndex >= 0) {
+        updatedChapter.formulas[formulaIndex] = {
+          ...updatedChapter.formulas[formulaIndex],
+          title: newFormula.title,
+          latex: newFormula.latex,
+          explanation: newFormula.explanation || "",
+          where: newFormula.where || "",
+          diagrams: [...(updatedChapter.formulas[formulaIndex].diagrams || []), ...uploadedImages.formula]
+        };
+      }
+    } else if (editingItem.type === "example" && newExample.question && newExample.solution) {
+      const exampleIndex = updatedChapter.examples.findIndex(e => e.id === editingItem.id);
+      if (exampleIndex >= 0) {
+        updatedChapter.examples[exampleIndex] = {
+          ...updatedChapter.examples[exampleIndex],
+          question: newExample.question,
+          solution: newExample.solution,
+          isJeeAdvanced: newExample.isJeeAdvanced || false,
+          diagrams: [...(updatedChapter.examples[exampleIndex].diagrams || []), ...uploadedImages.example]
+        };
+      }
+    } else {
+      toast({
+        title: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateChapter(updatedChapter);
+    setEditDialogOpen(false);
+    setEditingItem(null);
+    resetForms();
     toast({
-      title: "File upload functionality would be implemented here",
-      description: "This would connect to a storage service in a complete app",
+      title: "Content updated successfully",
+    });
+  };
+
+  const handleDeleteContent = () => {
+    if (!deletingItem) return;
+    
+    const updatedChapter = { ...chapter };
+    
+    if (deletingItem.type === "concept") {
+      updatedChapter.concepts = updatedChapter.concepts.filter(c => c.id !== deletingItem.id);
+    } else if (deletingItem.type === "formula") {
+      updatedChapter.formulas = updatedChapter.formulas.filter(f => f.id !== deletingItem.id);
+    } else if (deletingItem.type === "example") {
+      updatedChapter.examples = updatedChapter.examples.filter(e => e.id !== deletingItem.id);
+    }
+    
+    updateChapter(updatedChapter);
+    setDeleteDialogOpen(false);
+    setDeletingItem(null);
+    toast({
+      title: "Content deleted successfully",
+    });
+  };
+
+  const handleEditItem = (id: string, type: "concept" | "formula" | "example") => {
+    setEditingItem({ id, type });
+    setContentType(type);
+    
+    if (type === "concept") {
+      const concept = chapter.concepts.find(c => c.id === id);
+      if (concept) {
+        setNewConcept({ title: concept.title, content: concept.content });
+      }
+    } else if (type === "formula") {
+      const formula = chapter.formulas.find(f => f.id === id);
+      if (formula) {
+        setNewFormula({ 
+          title: formula.title, 
+          latex: formula.latex,
+          explanation: formula.explanation,
+          where: formula.where
+        });
+      }
+    } else if (type === "example") {
+      const example = chapter.examples.find(e => e.id === id);
+      if (example) {
+        setNewExample({
+          question: example.question,
+          solution: example.solution,
+          isJeeAdvanced: example.isJeeAdvanced
+        });
+      }
+    }
+    
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteItem = (id: string, type: "concept" | "formula" | "example") => {
+    setDeletingItem({ id, type });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "concept" | "formula" | "example") => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    // In a real app, this would upload to a server and get URLs
+    // For this demo, we'll create local object URLs
+    const newImages = Array.from(files).map(file => URL.createObjectURL(file));
+    
+    setUploadedImages(prev => ({
+      ...prev,
+      [type]: [...prev[type], ...newImages]
+    }));
+    
+    toast({
+      title: `${files.length} image(s) added`,
+      description: "Images have been added to your content"
     });
   };
   
@@ -146,14 +303,26 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                     />
                   </div>
                   <div>
-                    <Label htmlFor="images">Upload Images (Optional)</Label>
+                    <Label htmlFor="images">Upload Images</Label>
                     <Input
                       id="images"
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={handleFileUpload}
+                      onChange={(e) => handleFileUpload(e, "concept")}
                     />
+                    {uploadedImages.concept.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {uploadedImages.concept.map((img, i) => (
+                          <img 
+                            key={i} 
+                            src={img} 
+                            alt={`Uploaded ${i}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -196,6 +365,28 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                       placeholder="e.g. Used in mechanics problems"
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="formula-images">Upload Images</Label>
+                    <Input
+                      id="formula-images"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, "formula")}
+                    />
+                    {uploadedImages.formula.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {uploadedImages.formula.map((img, i) => (
+                          <img 
+                            key={i} 
+                            src={img} 
+                            alt={`Uploaded ${i}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               
@@ -230,6 +421,28 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                     />
                     <Label htmlFor="isJeeAdvanced">JEE Advanced Question</Label>
                   </div>
+                  <div>
+                    <Label htmlFor="example-images">Upload Images</Label>
+                    <Input
+                      id="example-images"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, "example")}
+                    />
+                    {uploadedImages.example.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {uploadedImages.example.map((img, i) => (
+                          <img 
+                            key={i} 
+                            src={img} 
+                            alt={`Uploaded ${i}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -258,11 +471,31 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
               </div>
             ) : (
               chapter.concepts.map((concept) => (
-                <div key={concept.id} className="bg-white p-6 rounded-lg shadow-md">
+                <div key={concept.id} className="bg-white p-6 rounded-lg shadow-md relative group">
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleEditItem(concept.id, "concept")} 
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleDeleteItem(concept.id, "concept")} 
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
                   <h2 className="text-xl font-semibold mb-4">{concept.title}</h2>
                   <div className="prose max-w-none">
                     <p>{concept.content}</p>
                   </div>
+                  
                   {concept.diagrams && concept.diagrams.length > 0 && (
                     <div className="mt-4">
                       <h3 className="text-lg font-medium mb-2">Diagrams</h3>
@@ -292,7 +525,39 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
               </div>
             ) : (
               chapter.formulas.map((formula) => (
-                <FormulaCard key={formula.id} formula={formula} />
+                <div key={formula.id} className="relative group">
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleEditItem(formula.id, "formula")} 
+                      className="h-7 w-7 p-0 bg-white/80 backdrop-blur-sm"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleDeleteItem(formula.id, "formula")} 
+                      className="h-7 w-7 p-0 bg-white/80 backdrop-blur-sm text-red-500 hover:text-red-600"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <FormulaCard formula={formula} />
+                  
+                  {formula.diagrams && formula.diagrams.length > 0 && (
+                    <div className="mt-2 p-3 bg-white rounded-lg shadow-md">
+                      <div className="grid grid-cols-2 gap-2">
+                        {formula.diagrams.map((diagram, index) => (
+                          <div key={index} className="bg-gray-50 p-1 rounded">
+                            <img src={diagram} alt={`Diagram ${index + 1}`} className="w-full h-auto" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))
             )}
           </div>
@@ -309,17 +574,48 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
               </div>
             ) : (
               chapter.examples.map((example) => (
-                <div key={example.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={example.id} className="bg-white rounded-lg shadow-md overflow-hidden relative group">
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleEditItem(example.id, "example")} 
+                      className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => handleDeleteItem(example.id, "example")} 
+                      className="h-8 w-8 p-0 bg-white/80 backdrop-blur-sm text-red-500 hover:text-red-600"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
                   {example.isJeeAdvanced && (
                     <div className="bg-physics-main text-white px-4 py-1 text-sm font-semibold">
                       JEE Advanced
                     </div>
                   )}
+                  
                   <div className="p-6">
                     <div className="mb-4">
                       <h3 className="font-semibold mb-2">Question:</h3>
                       <p>{example.question}</p>
+                      
+                      {example.diagrams && example.diagrams.length > 0 && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {example.diagrams.map((diagram, index) => (
+                            <div key={index} className="bg-gray-100 p-1 rounded">
+                              <img src={diagram} alt={`Diagram ${index + 1}`} className="w-full h-auto" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    
                     <div className="pt-3 border-t">
                       <h3 className="font-semibold mb-2">Solution:</h3>
                       <p className="whitespace-pre-wrap">{example.solution}</p>
@@ -331,6 +627,190 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
           </div>
         </TabsContent>
       </Tabs>
+      
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Content</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {contentType === "concept" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-title">Concept Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={newConcept.title}
+                    onChange={(e) => setNewConcept({ ...newConcept, title: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-content">Content</Label>
+                  <Textarea
+                    id="edit-content"
+                    rows={5}
+                    value={newConcept.content}
+                    onChange={(e) => setNewConcept({ ...newConcept, content: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-images">Add More Images</Label>
+                  <Input
+                    id="edit-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, "concept")}
+                  />
+                  {uploadedImages.concept.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {uploadedImages.concept.map((img, i) => (
+                        <img 
+                          key={i} 
+                          src={img} 
+                          alt={`Uploaded ${i}`} 
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {contentType === "formula" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-formula-title">Formula Title</Label>
+                  <Input
+                    id="edit-formula-title"
+                    value={newFormula.title}
+                    onChange={(e) => setNewFormula({ ...newFormula, title: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-latex">Formula (LaTeX)</Label>
+                  <Textarea
+                    id="edit-latex"
+                    value={newFormula.latex}
+                    onChange={(e) => setNewFormula({ ...newFormula, latex: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-explanation">Explanation</Label>
+                  <Textarea
+                    id="edit-explanation"
+                    value={newFormula.explanation}
+                    onChange={(e) => setNewFormula({ ...newFormula, explanation: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-where">Where It's Used</Label>
+                  <Input
+                    id="edit-where"
+                    value={newFormula.where}
+                    onChange={(e) => setNewFormula({ ...newFormula, where: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-formula-images">Add More Images</Label>
+                  <Input
+                    id="edit-formula-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, "formula")}
+                  />
+                  {uploadedImages.formula.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {uploadedImages.formula.map((img, i) => (
+                        <img 
+                          key={i} 
+                          src={img} 
+                          alt={`Uploaded ${i}`} 
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {contentType === "example" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-question">Question</Label>
+                  <Textarea
+                    id="edit-question"
+                    rows={3}
+                    value={newExample.question}
+                    onChange={(e) => setNewExample({ ...newExample, question: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-solution">Solution</Label>
+                  <Textarea
+                    id="edit-solution"
+                    rows={5}
+                    value={newExample.solution}
+                    onChange={(e) => setNewExample({ ...newExample, solution: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-isJeeAdvanced"
+                    checked={newExample.isJeeAdvanced}
+                    onChange={(e) => setNewExample({ ...newExample, isJeeAdvanced: e.target.checked })}
+                  />
+                  <Label htmlFor="edit-isJeeAdvanced">JEE Advanced Question</Label>
+                </div>
+                <div>
+                  <Label htmlFor="edit-example-images">Add More Images</Label>
+                  <Input
+                    id="edit-example-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, "example")}
+                  />
+                  {uploadedImages.example.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {uploadedImages.example.map((img, i) => (
+                        <img 
+                          key={i} 
+                          src={img} 
+                          alt={`Uploaded ${i}`} 
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditContent}>Update Content</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingItem(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteContent} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

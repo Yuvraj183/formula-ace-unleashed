@@ -1,19 +1,20 @@
-
 export type Subject = 'physics' | 'chemistry' | 'mathematics';
 
 export interface Formula {
   id: string;
   title: string;
   latex: string;
-  explanation: string;
-  where: string;
+  explanation?: string;
+  where?: string;
+  diagrams?: string[];
 }
 
 export interface Example {
   id: string;
   question: string;
   solution: string;
-  isJeeAdvanced: boolean;
+  isJeeAdvanced?: boolean;
+  diagrams?: string[];
 }
 
 export interface Concept {
@@ -34,17 +35,18 @@ export interface Chapter {
 }
 
 export interface ChatMessage {
-  id: string;
+  id?: string;
   content: string;
   isUser: boolean;
-  timestamp: number;
+  timestamp?: number;
 }
 
 export interface ChatThread {
   id: string;
   title: string;
   messages: ChatMessage[];
-  lastUpdated: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface TodoTask {
@@ -86,7 +88,6 @@ export const SUBJECTS: Record<Subject, SubjectData> = {
   }
 };
 
-// Sample initial data
 export const INITIAL_CHAPTERS: Chapter[] = [
   {
     id: 'phys-kinematics',
@@ -241,7 +242,8 @@ export const SAMPLE_CHAT_THREAD: ChatThread = {
       timestamp: Date.now() - 3540000
     }
   ],
-  lastUpdated: Date.now() - 3540000
+  createdAt: Date.now() - 3540000,
+  updatedAt: Date.now() - 3540000
 };
 
 export const INITIAL_TODOS: TodoTask[] = [
