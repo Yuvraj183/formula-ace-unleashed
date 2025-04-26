@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "./components/Sidebar";
 import Index from "./pages/Index";
 import Subject from "./pages/Subject";
 import Chapter from "./pages/Chapter";
@@ -77,7 +79,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <AppSidebar />
+              <div className="flex-1">
+                <AppRoutes />
+              </div>
+            </div>
+          </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
