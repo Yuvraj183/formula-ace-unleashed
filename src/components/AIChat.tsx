@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { ChatThread, ChatMessage } from "@/lib/data";
 import { addMessageToThread, createChatThread, getChatThreads, saveChatThreads } from "@/lib/storage";
@@ -353,31 +352,6 @@ This concept forms a fundamental building block in our understanding of ${userQu
   };
   
   const activeThread = threads.find(thread => thread.id === activeThreadId);
-
-  const handleCreateThread = () => {
-    if (!newThreadTitle.trim()) {
-      toast({
-        title: "Please enter a title for the new conversation",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const newThreadId = createChatThread(newThreadTitle, "How can I help you today?");
-    setActiveThreadId(newThreadId);
-    setThreads(getChatThreads());
-    setNewThreadTitle("");
-  };
-  
-  const handleDeleteThread = (threadId: string) => {
-    const updatedThreads = threads.filter(thread => thread.id !== threadId);
-    saveChatThreads(updatedThreads);
-    setThreads(updatedThreads);
-    
-    if (activeThreadId === threadId) {
-      setActiveThreadId(updatedThreads.length > 0 ? updatedThreads[0].id : null);
-    }
-  };
   
   return (
     <div className="flex h-[calc(100vh-64px)]">
