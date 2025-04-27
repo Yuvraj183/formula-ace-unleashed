@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { format, addDays, subDays, startOfWeek, parseISO } from "date-fns";
+import { format, addDays, subDays, startOfWeek, parseISO, isToday } from "date-fns";
 import { Calendar as CalendarIcon, Trash2, Check, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { TodoTask } from "@/lib/data";
-import { addTodo, deleteTodo, getTodosForDate, toggleTodoCompletion } from "@/lib/storage";
+import { addTodo, deleteTodo, getTodosForDate, toggleTodoCompletion, saveTodos, getTodos } from "@/lib/storage";
 import FlipClock from "./FlipClock";
 
 const TodoList = () => {
@@ -51,7 +52,7 @@ const TodoList = () => {
     // Refresh todos
     setTodos(getTodosForDate(formattedDate));
   };
-  
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -195,3 +196,4 @@ const TodoList = () => {
 };
 
 export default TodoList;
+

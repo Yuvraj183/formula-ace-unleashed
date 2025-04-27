@@ -1,4 +1,3 @@
-
 import { Chapter, ChatThread, INITIAL_CHAPTERS, INITIAL_TODOS, SAMPLE_CHAT_THREAD, TodoTask } from "./data";
 
 // Local storage keys
@@ -124,7 +123,23 @@ export const getTodos = (): TodoTask[] => {
     localStorage.setItem(TODOS_KEY, JSON.stringify(INITIAL_TODOS));
     return INITIAL_TODOS;
   }
-  return JSON.parse(storedTodos);
+  
+  // Parse stored todos and remove past uncompleted tasks
+  const parsedTodos = JSON.parse(storedTodos);
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const filteredTodos = parsedTodos.filter((todo: TodoTask) => {
+    // Keep completed tasks
+    if (todo.completed) return true;
+    
+    // Remove uncompleted tasks from previous days
+    return todo.date === currentDate;
+  });
+  
+  // Update localStorage with filtered todos
+  localStorage.setItem(TODOS_KEY, JSON.stringify(filteredTodos));
+  
+  return filteredTodos;
 };
 
 // Save todos to local storage
