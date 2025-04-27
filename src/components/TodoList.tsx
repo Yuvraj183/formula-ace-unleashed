@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addDays, subDays, startOfWeek, parseISO } from "date-fns";
 import { Calendar as CalendarIcon, Trash2, Check, CheckCircle } from "lucide-react";
