@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import openai from "@/lib/openai";
+import gemini from "@/lib/gemini";
 
 export async function POST(req: Request) {
   const { question } = await req.json();
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: question }],
+    const model = gemini.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(question);
+    const response = await result.response;
+    
+    return NextResponse.json({
+      answer: response.text(),
     });
 
     return NextResponse.json({
-      answer: response.choices[0].message.content,
+      answer: response.text(),
     });
   } catch (error) {
     console.error(error);
