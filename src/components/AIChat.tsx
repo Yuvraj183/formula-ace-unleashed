@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { ChatThread, ChatMessage } from "@/lib/data";
 import { addMessageToThread, createChatThread, getChatThreads, saveChatThreads } from "@/lib/storage";
@@ -361,28 +362,5 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
     </div>
   );
 };
-async function handleAsk() {
-  if (!question.trim()) return;
-  setLoading(true);
-
-  try {
-    const res = await fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
-    });
-    const data = await res.json();
-    if (data.answer) {
-      setAnswer(data.answer);
-    } else {
-      setAnswer("Sorry, I couldn't solve this right now.");
-    }
-  } catch (error) {
-    console.error(error);
-    setAnswer("Error connecting to server.");
-  }
-
-  setLoading(false);
-}
 
 export default AIChat;
