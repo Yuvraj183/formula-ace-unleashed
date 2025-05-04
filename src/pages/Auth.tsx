@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { FcGoogle } from "react-icons/fc";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +41,24 @@ const Auth = () => {
       toast.error(error.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(`Google sign in failed: ${error.message}`);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -80,6 +101,23 @@ const Auth = () => {
             {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
           </Button>
         </form>
+
+        <div className="flex items-center gap-2">
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">OR</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full flex items-center gap-2 justify-center"
+          onClick={handleGoogleSignIn}
+          disabled={googleLoading}
+        >
+          <FcGoogle size={20} />
+          {googleLoading ? "Loading..." : "Continue with Google"}
+        </Button>
 
         <div className="text-center">
           <button
