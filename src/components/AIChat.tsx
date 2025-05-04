@@ -53,25 +53,40 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
     
     // Add user message to thread
     addMessageToThread(activeThreadId, { content: newMessage, isUser: true });
+    const userQuestion = newMessage.trim();
     setNewMessage("");
+    setThreads(getChatThreads());
     
     // Generate AI response
     setIsLoading(true);
     
     try {
-      // Get the user's question
-      const question = newMessage.trim();
-      
       // Call the API route that integrates with Gemini
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: userQuestion }),
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to get AI response");
+        const errorText = await response.text();
+        let errorMessage = "Failed to get AI response";
+        
+        try {
+          // Try to parse the error as JSON
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If it's not valid JSON, use the raw text
+          errorMessage = `Error: ${errorText.substring(0, 100)}${errorText.length > 100 ? '...' : ''}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("The API returned an invalid response format");
       }
       
       const data = await response.json();

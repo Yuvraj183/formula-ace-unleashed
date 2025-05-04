@@ -5,7 +5,8 @@ import gemini from "@/lib/gemini";
 export async function POST(req: Request) {
   try {
     // Extract the question from the request body
-    const { question } = await req.json();
+    const body = await req.json();
+    const { question } = body;
     
     if (!question || question.trim() === '') {
       return NextResponse.json({
@@ -19,10 +20,11 @@ export async function POST(req: Request) {
     // Generate content based on the user's question
     const result = await model.generateContent(question);
     const response = await result.response;
+    const text = response.text();
     
-    // Return the AI's response
+    // Return the AI's response as JSON
     return NextResponse.json({
-      answer: response.text(),
+      answer: text,
     });
   } catch (error) {
     console.error("Gemini API Error:", error);
