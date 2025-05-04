@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { ChatThread, ChatMessage } from "@/lib/data";
 import { addMessageToThread, createChatThread, getChatThreads, saveChatThreads } from "@/lib/storage";
@@ -83,8 +82,6 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
         isUser: false 
       });
       
-      setIsLoading(false);
-      
       // Refresh threads
       setThreads(getChatThreads());
     } catch (error) {
@@ -101,8 +98,10 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
         isUser: false 
       });
       
-      setIsLoading(false);
+      // Refresh threads
       setThreads(getChatThreads());
+    } finally {
+      setIsLoading(false);
     }
   };
 

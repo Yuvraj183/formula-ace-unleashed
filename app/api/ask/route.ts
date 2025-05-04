@@ -3,9 +3,16 @@ import { NextResponse } from "next/server";
 import gemini from "@/lib/gemini";
 
 export async function POST(req: Request) {
-  const { question } = await req.json();
-
   try {
+    // Extract the question from the request body
+    const { question } = await req.json();
+    
+    if (!question || question.trim() === '') {
+      return NextResponse.json({
+        error: "Question is required"
+      }, { status: 400 });
+    }
+
     // Use the gemini-pro model
     const model = gemini.getGenerativeModel({ model: "gemini-pro" });
     
