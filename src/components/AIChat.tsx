@@ -59,22 +59,26 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
     setIsLoading(true);
     
     try {
-      // Get context from the current thread for memory
-      const currentThread = threads.find(thread => thread.id === activeThreadId);
-      const context = currentThread?.messages
-        .slice(-5) // Get last 5 messages for context
-        .map(msg => ({role: msg.isUser ? 'user' : 'assistant', content: msg.content}));
+      // Get the user's question
+      const question = newMessage.trim();
       
-      // Call Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: JSON.stringify({ message: newMessage.trim(), context })
+      // Call the API route that integrates with Gemini
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
       });
-
-      if (error) throw error;
-
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get AI response");
+      }
+      
+      const data = await response.json();
+      
       // Add AI response to thread
       addMessageToThread(activeThreadId, { 
-        content: data.response, 
+        content: data.answer || "I couldn't generate a response right now.", 
         isUser: false 
       });
       
@@ -86,10 +90,18 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
       console.error("Error generating response:", error);
       toast({
         title: "Error generating response",
-        description: "Please try again later",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
+      
+      // Add error message to the thread
+      addMessageToThread(activeThreadId, { 
+        content: "I encountered an error while generating a response. Please try again.", 
+        isUser: false 
+      });
+      
       setIsLoading(false);
+      setThreads(getChatThreads());
     }
   };
 
