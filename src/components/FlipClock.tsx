@@ -41,22 +41,22 @@ const FlipClock = () => {
   return (
     <div className="flex justify-center w-full">
       <div className="flex items-center justify-center text-center">
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl p-6 shadow-2xl border-2 border-gray-700">
-          <div className="flex items-center justify-center gap-2 text-5xl font-mono font-bold">
-            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-4 py-3 rounded-lg shadow-inner border border-gray-700 min-w-[4rem] text-center">
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl p-3 sm:p-6 shadow-2xl border-2 border-gray-700">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 text-2xl sm:text-5xl font-mono font-bold">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-2 sm:px-4 py-2 sm:py-3 rounded-lg shadow-inner border border-gray-700 min-w-[2.5rem] sm:min-w-[4rem] text-center">
               {time.hours}
             </div>
-            <div className="text-primary animate-pulse text-6xl">:</div>
-            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-4 py-3 rounded-lg shadow-inner border border-gray-700 min-w-[4rem] text-center">
+            <div className="text-primary animate-pulse text-3xl sm:text-6xl">:</div>
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-2 sm:px-4 py-2 sm:py-3 rounded-lg shadow-inner border border-gray-700 min-w-[2.5rem] sm:min-w-[4rem] text-center">
               {time.minutes}
             </div>
-            <div className="text-primary animate-pulse text-6xl">:</div>
-            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-4 py-3 rounded-lg shadow-inner border border-gray-700 min-w-[4rem] text-center">
+            <div className="text-primary animate-pulse text-3xl sm:text-6xl">:</div>
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 px-2 sm:px-4 py-2 sm:py-3 rounded-lg shadow-inner border border-gray-700 min-w-[2.5rem] sm:min-w-[4rem] text-center">
               {time.seconds}
             </div>
           </div>
-          <div className="mt-4 flex justify-center">
-            <div className="bg-primary text-primary-foreground font-bold text-2xl px-6 py-2 rounded-lg shadow-lg">
+          <div className="mt-2 sm:mt-4 flex justify-center">
+            <div className="bg-primary text-primary-foreground font-bold text-base sm:text-2xl px-3 sm:px-6 py-1 sm:py-2 rounded-lg shadow-lg">
               {time.ampm}
             </div>
           </div>
