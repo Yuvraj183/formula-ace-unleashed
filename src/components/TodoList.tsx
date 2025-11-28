@@ -116,9 +116,9 @@ const TodoList = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="font-semibold text-lg mb-3">Current Time</h3>
-            <div className="py-2">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background rounded-2xl shadow-lg p-6 border border-primary/20">
+            <h3 className="font-bold text-xl mb-4 text-primary text-center">Current Time</h3>
+            <div className="py-4">
               <FlipClock />
             </div>
           </div>

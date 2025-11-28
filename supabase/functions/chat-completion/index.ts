@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -14,51 +13,63 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    // Validate API key format
-    if (!openAIApiKey.startsWith('sk-')) {
-      throw new Error('Invalid OpenAI API key format');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error('Gemini API key is not configured');
     }
 
     const { message, context } = await req.json();
+    
+    console.log('Received request with message:', message);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Build messages for Gemini
+    const messages = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: 'You are a helpful AI assistant specializing in explaining complex scientific and mathematical concepts. Provide detailed, step-by-step explanations with mathematical notation when possible.'
+          }
+        ]
+      },
+      ...(context || []).map((msg: any) => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      })),
+      {
+        role: 'user',
+        parts: [{ text: message }]
+      }
+    ];
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Updated to latest recommended model
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a helpful AI assistant specializing in explaining complex scientific and mathematical concepts. Provide detailed, step-by-step explanations with mathematical notation when possible.' 
-          },
-          ...(context || []),
-          { role: 'user', content: message }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7
+        contents: messages,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+        }
       }),
     });
 
     const data = await response.json();
     
+    console.log('Gemini API response:', JSON.stringify(data));
+    
     if (data.error) {
-      console.error('OpenAI API error:', data.error);
-      throw new Error(`OpenAI API error: ${data.error.message}`);
+      console.error('Gemini API error:', data.error);
+      throw new Error(`Gemini API error: ${data.error.message}`);
     }
     
-    if (!data.choices || data.choices.length === 0) {
+    if (!data.candidates || data.candidates.length === 0) {
       throw new Error('No response generated from the API');
     }
     
-    const generatedText = data.choices[0].message.content;
+    const generatedText = data.candidates[0].content.parts[0].text;
 
     return new Response(JSON.stringify({ response: generatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

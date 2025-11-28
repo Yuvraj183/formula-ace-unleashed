@@ -61,39 +61,22 @@ const AIChat = ({ initialThreadId }: AIChatProps) => {
     setIsLoading(true);
     
     try {
-      // Call the API route that integrates with Gemini
-      const response = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userQuestion }),
+      // Call the Supabase edge function
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: { message: userQuestion }
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = "Failed to get AI response";
-        
-        try {
-          // Try to parse the error as JSON
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // If it's not valid JSON, use the raw text
-          errorMessage = `Error: ${errorText.substring(0, 100)}${errorText.length > 100 ? '...' : ''}`;
-        }
-        
-        throw new Error(errorMessage);
+      if (error) {
+        throw new Error(error.message || "Failed to get AI response");
       }
       
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("The API returned an invalid response format");
+      if (!data || !data.response) {
+        throw new Error("No response received from AI");
       }
-      
-      const data = await response.json();
       
       // Add AI response to thread
       addMessageToThread(activeThreadId, { 
-        content: data.answer || "I couldn't generate a response right now.", 
+        content: data.response, 
         isUser: false 
       });
       
