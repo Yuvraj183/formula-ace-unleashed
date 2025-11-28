@@ -3,15 +3,17 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Chapter, SUBJECTS, Subject as SubjectType } from "@/lib/data";
-import { getChapters } from "@/lib/storage";
+import { getChapters, deleteChapter } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, Trash2 } from "lucide-react";
 import AddContentForm from "@/components/AddContentForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const Subject = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   
@@ -25,6 +27,19 @@ const Subject = () => {
     );
     setChapters(loadedChapters);
   }, [subject]);
+
+  const handleDeleteChapter = (chapterId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteChapter(chapterId);
+    const loadedChapters = getChapters().filter(
+      (chapter) => chapter.subject === subject
+    );
+    setChapters(loadedChapters);
+    toast({
+      title: "Chapter deleted",
+      description: "The chapter has been successfully removed.",
+    });
+  };
 
   if (!subjectData) {
     return <div>Invalid subject</div>;
@@ -79,15 +94,25 @@ const Subject = () => {
                 {chapters.map((chapter) => (
                   <div
                     key={chapter.id}
-                    className="bg-white border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+                    className="bg-white border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer group"
                     onClick={() => navigate(`/${subject}/${chapter.id}`)}
                   >
                     <div className={`h-2 ${subjectData.bgClass}`} />
                     <div className="p-6">
                       <div className="flex justify-between items-start mb-4">
-                        <h2 className="text-xl font-semibold">{chapter.title}</h2>
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${subjectData.bgClass}`}>
-                          <BookOpen className="h-4 w-4 text-white" />
+                        <h2 className="text-xl font-semibold flex-1">{chapter.title}</h2>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
+                            onClick={(e) => handleDeleteChapter(chapter.id, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${subjectData.bgClass}`}>
+                            <BookOpen className="h-4 w-4 text-white" />
+                          </div>
                         </div>
                       </div>
                       <div className="text-sm text-gray-500 mb-4">
