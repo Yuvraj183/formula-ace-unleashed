@@ -68,8 +68,22 @@ serve(async (req) => {
     if (!data.candidates || data.candidates.length === 0) {
       throw new Error('No response generated from the API');
     }
-    
-    const generatedText = data.candidates[0].content.parts[0].text;
+
+    const firstCandidate: any = data.candidates[0];
+    const parts = firstCandidate?.content?.parts;
+
+    let generatedText = '';
+    if (Array.isArray(parts) && parts.length > 0) {
+      generatedText = parts
+        .map((part: any) => (typeof part.text === 'string' ? part.text : ''))
+        .join('\n')
+        .trim();
+    }
+
+    if (!generatedText) {
+      console.error('Gemini API returned candidate without text parts:', JSON.stringify(data));
+      generatedText = 'I could not generate a proper answer for this question. Please try rephrasing it or asking a slightly shorter, more specific question.';
+    }
 
     return new Response(JSON.stringify({ response: generatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
