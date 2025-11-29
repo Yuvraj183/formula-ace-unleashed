@@ -2,6 +2,9 @@
 import { useEffect, useRef } from "react";
 import { Formula } from "@/lib/data";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
+import { useBookmarks } from "@/hooks/useBookmarks";
 
 declare global {
   interface Window {
@@ -15,6 +18,7 @@ interface FormulaCardProps {
 
 const FormulaCard = ({ formula }: FormulaCardProps) => {
   const formulaRef = useRef<HTMLDivElement>(null);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
   
   useEffect(() => {
     // Load KaTeX if not already loaded
@@ -44,8 +48,25 @@ const FormulaCard = ({ formula }: FormulaCardProps) => {
   };
   
   return (
-    <div className="formula-card mb-4">
-      <CardTitle className="text-lg font-medium mb-2">{formula.title}</CardTitle>
+    <div className="formula-card mb-4 relative group">
+      <div className="flex justify-between items-start mb-2">
+        <CardTitle className="text-lg font-medium flex-1">{formula.title}</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-8 w-8 p-0 transition-all ${
+            isBookmarked(formula.id)
+              ? 'text-yellow-500 hover:text-yellow-600'
+              : 'opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleBookmark(formula.id, 'formula');
+          }}
+        >
+          <Star className={`h-4 w-4 ${isBookmarked(formula.id) ? 'fill-current' : ''}`} />
+        </Button>
+      </div>
       <div 
         ref={formulaRef} 
         className="py-3 px-5 bg-gray-50 rounded-md overflow-x-auto min-h-[60px] flex items-center justify-center"

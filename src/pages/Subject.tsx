@@ -5,10 +5,12 @@ import Header from "@/components/Header";
 import { Chapter, SUBJECTS, Subject as SubjectType } from "@/lib/data";
 import { getChapters, deleteChapter } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Plus, Trash2, Star } from "lucide-react";
 import AddContentForm from "@/components/AddContentForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useBookmarks } from "@/hooks/useBookmarks";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Subject = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -16,9 +18,12 @@ const Subject = () => {
   const { toast } = useToast();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const [activeTab, setActiveTab] = useState("all");
   
   const subject = subjectId as SubjectType;
   const subjectData = SUBJECTS[subject];
+  const isChemistry = subject === 'chemistry';
 
   useEffect(() => {
     // Load chapters
@@ -27,6 +32,25 @@ const Subject = () => {
     );
     setChapters(loadedChapters);
   }, [subject]);
+
+  const getFilteredChapters = () => {
+    if (!isChemistry || activeTab === "all") {
+      return chapters;
+    }
+    return chapters.filter(ch => {
+      const titleLower = ch.title.toLowerCase();
+      if (activeTab === "ioc") {
+        return titleLower.includes("inorganic") || titleLower.includes("ioc");
+      } else if (activeTab === "oc") {
+        return titleLower.includes("organic") || titleLower.includes("oc");
+      } else if (activeTab === "pc") {
+        return titleLower.includes("physical") || titleLower.includes("pc");
+      }
+      return true;
+    });
+  };
+
+  const filteredChapters = getFilteredChapters();
 
   const handleDeleteChapter = (chapterId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,7 +102,18 @@ const Subject = () => {
               </Dialog>
             </div>
             
-            {chapters.length === 0 ? (
+            {isChemistry && (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="all">All Chapters</TabsTrigger>
+                  <TabsTrigger value="ioc">Inorganic (IOC)</TabsTrigger>
+                  <TabsTrigger value="oc">Organic (OC)</TabsTrigger>
+                  <TabsTrigger value="pc">Physical (PC)</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+
+            {filteredChapters.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                 <div className="mb-4 text-4xl">📚</div>
                 <h2 className="text-2xl font-semibold mb-2">No Chapters Yet</h2>
@@ -91,7 +126,7 @@ const Subject = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {chapters.map((chapter) => (
+                {filteredChapters.map((chapter) => (
                   <div
                     key={chapter.id}
                     className="bg-white border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden cursor-pointer group"
@@ -102,6 +137,21 @@ const Subject = () => {
                       <div className="flex justify-between items-start mb-4">
                         <h2 className="text-xl font-semibold flex-1">{chapter.title}</h2>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-8 w-8 p-0 transition-all ${
+                              isBookmarked(chapter.id)
+                                ? 'text-yellow-500 hover:text-yellow-600'
+                                : 'opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookmark(chapter.id, 'chapter');
+                            }}
+                          >
+                            <Star className={`h-4 w-4 ${isBookmarked(chapter.id) ? 'fill-current' : ''}`} />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
