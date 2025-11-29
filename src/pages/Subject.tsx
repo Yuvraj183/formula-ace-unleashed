@@ -50,7 +50,17 @@ const Subject = () => {
     });
   };
 
-  const filteredChapters = getFilteredChapters();
+  const sortChaptersByBookmark = (chaptersList: Chapter[]) => {
+    return [...chaptersList].sort((a, b) => {
+      const aBookmarked = isBookmarked(a.id);
+      const bBookmarked = isBookmarked(b.id);
+      if (aBookmarked && !bBookmarked) return -1;
+      if (!aBookmarked && bBookmarked) return 1;
+      return 0;
+    });
+  };
+
+  const filteredChapters = sortChaptersByBookmark(getFilteredChapters());
 
   const handleDeleteChapter = (chapterId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -143,14 +153,14 @@ const Subject = () => {
                             className={`h-8 w-8 p-0 transition-all ${
                               isBookmarked(chapter.id)
                                 ? 'text-yellow-500 hover:text-yellow-600'
-                                : 'opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+                                : 'text-gray-400 hover:text-yellow-500'
                             }`}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleBookmark(chapter.id, 'chapter');
                             }}
                           >
-                            <Star className={`h-4 w-4 ${isBookmarked(chapter.id) ? 'fill-current' : ''}`} />
+                            <Star className={`h-5 w-5 ${isBookmarked(chapter.id) ? 'fill-current' : ''}`} />
                           </Button>
                           <Button
                             variant="ghost"

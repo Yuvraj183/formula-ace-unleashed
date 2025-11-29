@@ -57,7 +57,7 @@ const FormulaCard = ({ formula }: FormulaCardProps) => {
           className={`h-8 w-8 p-0 transition-all ${
             isBookmarked(formula.id)
               ? 'text-yellow-500 hover:text-yellow-600'
-              : 'opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+              : 'text-gray-400 hover:text-yellow-500'
           }`}
           onClick={(e) => {
             e.stopPropagation();
