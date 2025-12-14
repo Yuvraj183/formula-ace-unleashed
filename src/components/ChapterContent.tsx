@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Chapter, Concept, Formula, Example } from "@/lib/data";
+import { Chapter, Concept, Formula, Example, TableData } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FormulaCard from "./FormulaCard";
+import TableEditor from "./TableEditor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +43,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
   const [newConcept, setNewConcept] = useState<Partial<Concept>>({ title: "", content: "" });
   const [newFormula, setNewFormula] = useState<Partial<Formula>>({ title: "", latex: "", explanation: "", where: "" });
   const [newExample, setNewExample] = useState<Partial<Example>>({ question: "", solution: "", isJeeAdvanced: false });
+  const [conceptTable, setConceptTable] = useState<TableData | undefined>(undefined);
+  const [formulaTable, setFormulaTable] = useState<TableData | undefined>(undefined);
   const [editingItem, setEditingItem] = useState<{id: string, type: "concept" | "formula" | "example"} | null>(null);
   const [deletingItem, setDeletingItem] = useState<{id: string, type: "concept" | "formula" | "example"} | null>(null);
   const [uploadedImages, setUploadedImages] = useState<{[key: string]: string[]}>({
@@ -55,6 +58,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
     setNewConcept({ title: "", content: "" });
     setNewFormula({ title: "", latex: "", explanation: "", where: "" });
     setNewExample({ question: "", solution: "", isJeeAdvanced: false });
+    setConceptTable(undefined);
+    setFormulaTable(undefined);
     setUploadedImages({
       concept: [],
       formula: [],
@@ -70,7 +75,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
         id: `concept-${Date.now()}`,
         title: newConcept.title,
         content: newConcept.content,
-        diagrams: uploadedImages.concept
+        diagrams: uploadedImages.concept,
+        table: conceptTable
       };
       updatedChapter.concepts = [...updatedChapter.concepts, concept];
       setNewConcept({ title: "", content: "" });
@@ -81,7 +87,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
         latex: newFormula.latex || "",
         explanation: newFormula.explanation || "",
         where: newFormula.where || "",
-        diagrams: uploadedImages.formula
+        diagrams: uploadedImages.formula,
+        table: formulaTable
       };
       updatedChapter.formulas = [...updatedChapter.formulas, formula];
       setNewFormula({ title: "", latex: "", explanation: "", where: "" });
@@ -123,7 +130,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
           ...updatedChapter.concepts[conceptIndex],
           title: newConcept.title,
           content: newConcept.content,
-          diagrams: [...(updatedChapter.concepts[conceptIndex].diagrams || []), ...uploadedImages.concept]
+          diagrams: [...(updatedChapter.concepts[conceptIndex].diagrams || []), ...uploadedImages.concept],
+          table: conceptTable
         };
       }
     } else if (editingItem.type === "formula" && newFormula.title && newFormula.latex) {
@@ -135,7 +143,8 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
           latex: newFormula.latex,
           explanation: newFormula.explanation || "",
           where: newFormula.where || "",
-          diagrams: [...(updatedChapter.formulas[formulaIndex].diagrams || []), ...uploadedImages.formula]
+          diagrams: [...(updatedChapter.formulas[formulaIndex].diagrams || []), ...uploadedImages.formula],
+          table: formulaTable
         };
       }
     } else if (editingItem.type === "example" && newExample.question && newExample.solution) {
@@ -195,6 +204,7 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
       const concept = chapter.concepts.find(c => c.id === id);
       if (concept) {
         setNewConcept({ title: concept.title, content: concept.content });
+        setConceptTable(concept.table);
       }
     } else if (type === "formula") {
       const formula = chapter.formulas.find(f => f.id === id);
@@ -205,6 +215,7 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
           explanation: formula.explanation,
           where: formula.where
         });
+        setFormulaTable(formula.table);
       }
     } else if (type === "example") {
       const example = chapter.examples.find(e => e.id === id);
@@ -324,6 +335,10 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                       </div>
                     )}
                   </div>
+                  <div>
+                    <Label>Table (Optional)</Label>
+                    <TableEditor table={conceptTable} onChange={setConceptTable} />
+                  </div>
                 </div>
               )}
               
@@ -386,6 +401,10 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                         ))}
                       </div>
                     )}
+                  </div>
+                  <div>
+                    <Label>Table (Optional)</Label>
+                    <TableEditor table={formulaTable} onChange={setFormulaTable} />
                   </div>
                 </div>
               )}
@@ -505,6 +524,36 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                             <img src={diagram} alt={`Diagram ${index + 1}`} className="w-full h-auto" />
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {concept.table && (
+                    <div className="mt-4">
+                      <h3 className="text-lg font-medium mb-2">Table</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse border border-border">
+                          <thead>
+                            <tr className="bg-muted">
+                              {concept.table.headers.map((header, i) => (
+                                <th key={i} className="border border-border px-3 py-2 text-left font-semibold">
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {concept.table.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex}>
+                                {row.map((cell, cellIndex) => (
+                                  <td key={cellIndex} className="border border-border px-3 py-2">
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
@@ -675,9 +724,12 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                     </div>
                   )}
                 </div>
+                <div>
+                  <Label>Table (Optional)</Label>
+                  <TableEditor table={conceptTable} onChange={setConceptTable} />
+                </div>
               </div>
             )}
-            
             {contentType === "formula" && (
               <div className="space-y-4">
                 <div>
@@ -734,9 +786,12 @@ const ChapterContent = ({ chapter, selectedConceptId }: ChapterContentProps) => 
                     </div>
                   )}
                 </div>
+                <div>
+                  <Label>Table (Optional)</Label>
+                  <TableEditor table={formulaTable} onChange={setFormulaTable} />
+                </div>
               </div>
             )}
-            
             {contentType === "example" && (
               <div className="space-y-4">
                 <div>

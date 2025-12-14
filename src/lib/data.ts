@@ -1,5 +1,10 @@
 export type Subject = 'physics' | 'chemistry' | 'mathematics';
 
+export interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
 export interface Formula {
   id: string;
   title: string;
@@ -7,6 +12,7 @@ export interface Formula {
   explanation?: string;
   where?: string;
   diagrams?: string[];
+  table?: TableData;
 }
 
 export interface Example {
@@ -22,6 +28,7 @@ export interface Concept {
   title: string;
   content: string;
   diagrams?: string[];
+  table?: TableData;
 }
 
 export interface Chapter {
